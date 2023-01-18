@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald&family=Ubuntu:ital,wght@1,300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+
+    <title>Diffusion technology</title>
+</head>
+
+<body>
+    <h1 class="header" style="color: rgb(51, 3, 95); font-size: 70px">Graph Neural Networks as Neural Diffusion PDE's</h1>
+    
+    <hr>
+    <p class="readme" style="font-size: 30px; color: rgb(92, 53, 3);">
+        <b>
+        Graph neural networks (GNNs) are intimately related to differential equations governing information 
+        <br>
+        diffusion on graphs. Thinking of GNNs as partial differential equations (PDEs) leads to a new broad 
+        <br>
+        class of GNNs that are able to address in a principled way some of the prominent issues of current
+        <br> 
+        Graph ML models such as depth, oversmoothing, bottlenecks, and graph rewiring.
+        </b>
+    </p>
+
+    <hr>
+    <div class="quote" style="padding-inline-start:100px;">
+        <p style="font-size: 25px; color: rgb(33, 180, 77);">
+            <img src="https://miro.medium.com/max/720/1*GZ4ngm50nIJXDDTFe2utGQ.webp" alt="First page of “Scala graduum Caloris”">
+            <br>
+            <i>First page of “Scala graduum Caloris”, a 1701 paper by Sir Isaac Newton published anonymously in the
+            <br>
+            Philosophical Transactions of the Royal Society. Shown is a temperature scale with 0 corresponding 
+            <br>
+            to the temperature of “winter air when water starts freezing” (aqua incipit gelu rigescere) and 12 
+            <br>
+            representing the temperature measured upon “contact with the human body” (contactum corporis humani).
+            <br> 
+            The highest temperature of 210 is that of “kitchen fire urged by bellows”.</i>
+        </p>
+    </div>
+
+    <hr>
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        <span class="bigletter">In</span>
+        March 1701, the Philosophical Transactions of the Royal Society published an anonymous note in 
+        <br>
+        Latin titled “A Scale of the Degrees of Heat” [1]. Though no name was indicated, it was no secret
+        <br> 
+        that Isaac Newton was the author (he would become “Sir Isaac” four years later). In a series of
+        <br> 
+        experiments, Newton observed that
+    </p>
+
+    <div style="padding-inline-start:100px; color: darkcyan; font-size: 30px; font-family: monospace;">
+        the temperature a hot body loses in a given time 
+        <br>
+        is proportional to the temperature difference between 
+        <br>
+        the object and the environment
+    </div>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        - a modern statement of a law that today bears his name [2]. Expressed mathematically, Newton's law
+        <br>
+        of cooling gives rise to the heat diffusion equation, a partial differential equation (PDE) which 
+        <br>
+        in the simplest form reads
+        <br>
+    </p>
+
+    <div style="padding-inline-start:100px; color: darkcyan; font-size: 30px; font-family: monospace;">
+        ẋ= aΔx.
+    </div>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        Here, x(u,t) denotes the temperature at time t and point u on some domain, the lhs (temporal derivative ẋ)
+        <br> 
+        is the “rate of change of temperature” and the rhs (spatial second-order derivative or the Laplacian Δx) 
+        <br>
+        expresses the local difference between the temperature of a point and its surrounding, and a is the proportion 
+        <br>
+        coefficient known as the thermal diffusivity. This PDE is linear and its solution can be given in closed form 
+        <br>
+        as the convolution of the initial temperature distribution with a time-dependent Gaussian kernel [3],
+    </p>
+
+    <div style="padding-inline-start:100px; color: darkcyan; font-size: 30px; font-family: monospace;">
+        x(u,t) = x(u,0)﹡exp(-|u|²/4t).
+    </div>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        More generally, one has to account for different thermal conduction properties of the object, 
+        <br>
+        leading to a PDE of the form
+    </p>
+
+    <div style="padding-inline-start:100px; color: darkcyan; font-size: 30px; font-family: monospace;">
+        ẋ(u,t) = div(a(u,t)∇x(u,t))
+    </div>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        encoding a more general Fourier's heat transfer law [4].
+        <br>
+    </p>
+
+    <div class="quote" style="padding-inline-start:100px;">
+        <img src="https://miro.medium.com/max/720/1*rTxrjWDkZsHCuTCfV0Mb9g.webp" alt="Newton's formule">
+        <p style="font-size: 25px; color: rgb(33, 180, 77);">
+            According to Newton's law of cooling (top), the rate of change of the temperature of a body (ẋ) 
+            <br>
+            is proportional to the difference between its own temperature and that of the surrounding. 
+            <br>
+            The solution of the resulting differential equation has the form of exponential decay. 
+            <br>
+            Fourier's heat transfer law (bottom) provides a more granular local model: the temperature is a 
+            <br>
+            scalar field x, its (negative) gradient is a vector field -∇x representing the flow of heat from 
+            <br>
+            hotter regions (red) to colder ones (blue), and the divergence div(-∇x) is the net flow of the
+            <br> 
+            vector field -∇x through an infinitesimal region around a point.
+        </p>
+    </div>
+    
+    <hr>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        <span class="bigletter">D</span>
+        iffusion PDEs arise in many physical processes involving the transfer of “stuff” (whether energy or matter),
+        <br> 
+        or more abstractly, information. In image processing, one can exploit the aforementioned interpretation 
+        <br>
+        of diffusion as linear low-pass filtering for image denoising. However, while removing noise such a filter
+        <br> 
+        also undesirably blurs transitions between regions of different colour or brightness (“edges”). 
+        <br>
+        An influential insight of Pietro Perona and Jitendra Malik [5] was to consider an adaptive diffusivity 
+        <br>
+        coefficient inversely dependent on the norm of the image gradient |∇x|: this way, diffusion is strong in 
+        <br>
+        “flat” regions (where |∇x|≈0) and weak in the presence of brightness discontinuities (where |∇x| is large).
+        <br> 
+        The result was a nonlinear filter capable of removing noise from the image while preserving edges.
+    </p>
+
+    <div style="padding-inline-start:100px; color: rgb(100, 69, 1);">
+        <img src="https://miro.medium.com/max/720/1*4fd41ANe5mQT221VgAo5ZA.webp" alt="The result of the neural network">
+        <p class="readme" style="font-size: 20px;">
+        Left: original image, middle: Gaussian filter, right: nonlinear adaptive diffusion (shown is a conceptually similar
+        <br> 
+        filter from Q. Yang, “Recursive bilateral filtering” (2012), ECCV).
+        </p>
+    </div>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        Perona-Malik diffusion and similar schemes created an entire field of PDE-based techniques that 
+        <br>
+        also drew inspiration and methods from geometry, calculus of variations, and numerical analysis [6]. 
+        <br>
+        For me personally, the works of Ron Kimmel on the numerical geometry of images [7] were the reason to 
+        <br>
+        fall in love with differential geometry and do a PhD on this topic. Variational and PDE-based methods 
+        <br>
+        dominated the stage of image processing and computer vision for nearly twenty years, ceding to deep 
+        <br>
+        learning in the second decade of the 2000s [8].
+        <br> 
+    </p>
+    <hr>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        <span class="bigletter">In</span>
+        our recent work at Twitter [9], we relied on the same philosophy to take a fresh look at graph neural networks.
+        <br> 
+        GNNs operate by exchanging information between adjacent nodes in the form of message passing, a process 
+        <br>
+        that is conceptually equivalent to diffusion. In this case, the base space is the graph and the diffusion 
+        <br>
+        happens along edges, where the analogy of the spatial derivatives is the differences between adjacent node 
+        <br>
+        features.
+        <br>
+        <br>
+        Formally, the generalisation of diffusion processes to graphs is almost straightforward: 
+        the equation looks identical,
+        <br>
+    </p>
+
+    <div style="padding-inline-start:100px; color: darkcyan; font-size: 30px; font-family: monospace;">
+        Ẋ(t) =div(A(X(t))∇X(t))
+    </div>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        where X(t) is now an n*d matrix of node features at time t, the gradient is an operator assigning 
+        <br>
+        to each edge u~v the difference of the respective node feature vectors, (∇X)ᵤᵥ=xᵥ-xᵤ wheres the 
+        <br>
+        divergence at node u sums the features of edges emanating from it, (div(X))ᵤ= ∑ᵥ wᵤᵥ xᵤᵥ [10]. 
+        <br>
+        The diffusivity is represented by a matrix-valued function of the form A(X)=diag(a(xᵤ, xᵥ)), 
+        <br>
+        where, as before, a is a function determining the strength of diffusion along edge u~v based on 
+        <br>
+        the similarity of the respective features xᵤ and xᵥ [11].
+    </p>
+
+    <div style="padding-inline-start:100px; color: rgb(100, 69, 1);">
+        <img src="https://miro.medium.com/max/720/1*eoGF6DrG33VGJ6a8kngKLQ.webp" alt="Node and edge features">
+        <p class="readme" style="font-size: 20px;">
+            Node and edge features are analogous to scalar and vector fields on graphs, respectively. 
+            <br>
+            The gradient produces edge features of the form (∇X)ᵤᵥ=xᵥ-xᵤ. The divergence produces node 
+            <br>
+            features of the form (div(X))ᵤ= ∑ᵥ wᵤᵥ xᵤᵥ.
+        </p>
+    </div>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        The graph diffusion equation can be written conveniently as a matrix differential equation of the form
+    </p>
+
+    <div style="padding-inline-start:100px; color: darkcyan; font-size: 30px; font-family: monospace;">
+        Ẋ (t) =(A (X (t))-I) X (t).
+    </div>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        In most cases [12], this differential equation has no closed-form solution and has to be solved numerically. 
+        <br>
+        There are a plethora of numerical techniques for solving nonlinear diffusion equations differing primarily 
+        <br>
+        in the choice of spatial and temporal discretisation.
+    </p>
+    <hr>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        <span class="bigletter">T</span>
+        he simplest discretisation replaces the temporal derivative Ẋ with the forward time difference,
+    </p>
+
+    <div style="padding-inline-start:100px; color: darkcyan; font-size: 30px; font-family: monospace;">
+        [X(k+1)-X(k)]/𝜏=[A(X(k))-I]X(k)
+    </div>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        where k denotes the discrete time index (iteration number) and 𝜏 is the step size such that t=k𝜏. 
+        <br>
+        Rewriting the above formula as
+    </p>
+
+    <div style="padding-inline-start:100px; color: darkcyan; font-size: 30px; font-family: monospace;">
+        X(k+1)=[(1-𝜏)I+𝜏A(X(k))]X(k)=Q(k)X(k)
+    </div>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        we get the formula of an explicit or forward Euler scheme, where the next iteration X(k+1) is 
+        <br>
+        computed from the previous one X(k) by applying a linear operator Q(k) [13], starting from some X(0). 
+        <br>
+        This scheme is numerically stable (in the sense that a small perturbation in the input X(0) results in 
+        <br>
+        a small perturbation to the output X(k)) only when the time step is sufficiently small. 
+        <br>
+        <br>
+        Using backward time difference to discretise the temporal derivative leads to the (semi-)implicit scheme,
+    </p>
+
+    <div style="padding-inline-start:100px; color: darkcyan; font-size: 30px; font-family: monospace;">
+        [(1+𝜏)I-𝜏A(X (k))]X(k + 1) = B (k) X (k + 1) = X (k)
+    </div>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        named thus because deducing the next iterate from the previous one requires solving a linear system 
+        <br>
+        amounting to the inversion of B (in most cases carried out approximately, by a few iterations of a linear solver).
+        <br> 
+        This scheme is unconditionally stable, meaning that we can use any 𝜏>0 without worrying that the iterations 
+        will blow up.
+        <br>
+        <br>
+        These are the conceptually simplest discretisation techniques that do not necessarily work the best in practice. 
+        <br>
+        In the PDE literature, it is common to use multi-step schemes such as Runge-Kutta [14] where the subsequent 
+        <br>
+        iterate is computed as a linear combination of a few previous ones. Both the explicit and implicit cases can 
+        <br>
+        be made multi-step. Furthermore, the step size can be made adaptive, depending on the approximation error [15].
+    </p>
+
+    <div style="padding-inline-start:100px; color: rgb(100, 69, 1);">
+        <img src="https://miro.medium.com/max/720/1*u6rX3kigcEUtksqu6Ah5iw.webp" alt="Representation of different discretisation schemes">
+        <p class="readme" style="font-size: 20px;">
+            Block-diagram representation of different discretisation schemes for the graph diffusion equation 
+            <br>
+            (left-to-right: single step explicit Euler, multi-step fourth-order Runge-Kutta, single step implicit).
+            <br> 
+            A denotes the diffusion operator;𝜏 is the time step size.
+        </p>
+    </div>
+    <hr>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        <span class="bigletter">D</span>
+        iffusion equations with a parametric diffusivity function optimised for a given task define a broad 
+        <br>
+        family of graph neural network-like architectures we call Graph Neural Diffusion (or, somewhat immodestly, 
+        <br>
+        GRAND for short). The output is the solution X(T) of the diffusion equation at some end time T. 
+        <br>
+        Many popular GNN architectures can be formalised as instances of GRAND — parametric discretised graph 
+        <br>
+        diffusion equations. Specifically, the explicit scheme mentioned above has the form of a Graph Attention 
+        <br>
+        Network [16], where our diffusivity plays the role of attention.
+    </p>
+
+    <div style="padding-inline-start:100px; color: rgb(100, 69, 1);">
+        <img src="https://miro.medium.com/max/720/1*OSmMJDQB4B9m-50WtIH3VQ.webp" alt="Graph Neural Diffusion">
+        <p class="readme" style="font-size: 20px;">
+            In Graph Neural Diffusion, explicit GNN layers are replaced with the continuous analog of diffusion time.
+            <br>
+            This scheme allows training deep networks (running the diffusion for a long time) without experiencing 
+            <br>
+            performance degradation.
+        </p>
+    </div>
+    <hr>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        <span class="bigletter">I</span>
+        mplicit schemes allow using larger time steps and thus fewer iterations (“layers”) at the expense of 
+        <br>
+        the computational complexity of the iteration, which requires inversion of the diffusion operator. 
+        <br>
+        The diffusion operator (the matrix A in our equation) has the same structure of the adjacency matrix of 
+        <br>
+        the graph (1-hop filter), while its inverse is usually a dense matrix that can be interpreted as a 
+        <br>
+        multi-hop filter.
+        <br>
+        <br>
+        Since the efficiency of matrix inversion crucially depends on the structure of the matrix, in some 
+        <br>
+        situations it might be advantageous to decouple the graph used for diffusion from the input graph. 
+        <br>
+        Such techniques, collectively known as graph rewiring, have become a popular approach to deal with 
+        <br>
+        scalability or information bottlenecks in GNNs. The diffusion framework offers a principled view on 
+        <br>
+        graph rewiring by considering the graph as a spatial discretisation of some continuous object 
+        <br>
+        (e.g. a manifold) [18], and some discretisations are more advantageous numerically.
+    </p>
+
+    <div style="padding-inline-start:100px; color: rgb(100, 69, 1);">
+        <img src="https://miro.medium.com/max/720/1*qmOmnQXqJbD3B62aDxLkzw.webp" alt="Different discretisations of the 2D Laplacian operator">
+        <p class="readme" style="font-size: 20px;">
+            Different discretisations of the 2D Laplacian operator (any convex combination of these 
+            <br>
+            discretisations is also a valid one). Choosing a discretisation, possibly different at each 
+            <br>
+            point, is a Euclidean analogy of “graph rewiring”.
+        </p>
+    </div>
+    <hr>
+
+    <p style="font-size: 25px; color: darkslategray; font-family: Verdana, Geneva, Tahoma, sans-serif;">
+        <span class="bigletter">G</span>
+        raph Neural Diffusion provides a principled mathematical framework for studying many popular 
+        <br>
+        architectures for deep learning on graphs as well as a blueprint for developing new ones. 
+        <br>
+        This mindset sheds new light on some of the common issues of GNNs such as feature oversmoothing 
+        <br>
+        and the difficulty of designing deep neural networks as well as heuristic techniques such as graph 
+        <br>
+        rewiring. More broadly, we believe that exploring the connections between graph ML, differential 
+        <br>
+        equations, and geometry and leveraging the vast literature on these topics will lead to new interesting 
+        <br>
+        results in the field.
+    </p>
+    <hr>
+
+    <h1 class="header" style="color: rgb(148, 0, 20); font-size: 70px">Two neural networks that implemented diffusion</h1>
+    <hr>
+    
+    <p class="readme" style="font-size: 30px; color: rgb(231, 134, 6);">
+        <b>
+            In this chapter, we will look at two neural networks that use diffusion technology to create 
+            <br>
+            images of the highest quality in a short period of time.
+        </b>
+    </p>
+    <hr>
+
+    <h2 class="header" style="color: midnightblue; font-size: 50px;">Midjourney</h2>
+
+    <ul style="font-size: 40px; color: aqua;">
+        <li>
+            <p><a href="https://www.midjourney.com/home/"><b><i>Midjourney official website</i></b></a></p>
+        </li>
+    </ul>
+
+    <p class="readme" style="font-size: 30px;">
+        <span class="bigletter">M</span>
+        idjourney is a neural network that generates images based on text queries. 
+        <br>
+        It was created by scientist David Holtz, who worked at the NASA Research Center and the Max Planck Institute. 
+        <br>
+        Midjourney can be considered a technological breakthrough in the field of artificial intelligence. 
+        <br>
+        Its closest competitors are Dall—E 2 (closed neural network) and Dall-E Mini (rather, entertainment). 
+        <br>
+        Unlike them, Midjourney is open and has an applied value — it quickly and efficiently converts text into images. 
+        <br>
+        Midjourney is currently in beta testing and is available to users worldwide. 
+        <br>
+        This means that anyone can create images based on text queries.
+        <br>
+        <br>
+        The beta version of Midjourney is only available in Discord.
+        <a style="font-size: 30px;" href="https://discord.com/"><b><i>Official website of Discord</i></b></a>
+    </p>
+    <hr>
+
+    <p class="readme" style="font-size: 30px;">
+        <span class="bigletter">H</span>
+        ow to generate an image:
+    </p>
+
+    <ul class="readme" style="font-size: 30px; color: rgb(124, 0, 0); list-style-type: decimal;">
+        <li>Open any Newbies chat and start writing the / command. You will see a list of available commands.</li>
+        <li>Select /imagine. Along with it, Prompt will pop up — a mandatory part of the command that cannot be deleted.</li>
+        <li>After Prompt, enter your request, according to which Midjourney will generate an image. 
+            <br>
+            You can write anything except forbidden words. It is better to formulate queries in English.</li>
+        <li>Send a message to the bot and wait — the neural network will create a drawing before your eyes.</li>
+    </ul>
+    <hr>
+
+    <p class="readme" style="font-size: 30px;">
+        <span class="bigletter">W</span>
+        hat is forbidden to generate
+        <br>
+        You cannot enter queries and individual words that do not correspond to the PG13 — 13+ rating. 
+        <br>
+        Everything related to alcohol, narcotic substances, swearing, sexual overtones is banned. 
+        <br>
+        Violation of the rules threatens to restrict actions up to the complete blocking of the account in Midjourney.
+    </p>
+    <hr>
+
+    <p class="readme" style="font-size: 30px;">
+        <span class="bigletter">Y</span>
+        You can make the right request with the help of technical documentation describing all the functions 
+        <br>
+        available in the bot at the moment. 
+        <br>
+        Study it <a style="font-size: 30px;" href="https://midjourney.gitbook.io/docs/"><b><i>Official Midjourney Documentation</i></b></a>
+        <br>
+        Official tags can also help you <a style="font-size: 30px;" href="https://github.com/willwulfken/MidJourney-Styles-and-Keywords-Reference/blob/main/Pages/Midjourney_Beta_Features/MJ_V4_Alpha/Style_Pages/Themes.md"><b><i>Official Midjourney Tags</i></b></a>
+    </p>
+    <hr>
+
+    <p class="readme" style="font-size: 30px;">
+        <span class="bigletter">G</span>
+        allery of the best paintings created with Midjourney:
+        <br>
+        <a style="font-size: 30px; color: rgb(56, 21, 21);" href="https://www.midjourney.com/showcase/recent/"><b><i>Official Midjourney Gallary</i></b></a>
+    </p>
+    <hr>
+
+    <p class="readme" style="font-size: 30px;">
+        <span class="bigletter">M</span>
+        y results of using the service:
+        <br>
+        <br>
+        <img class="smallimg" src="My_arts_midjorney/-KnGe8m3HE-Lc-U2B5REEQBxwLjjz2BbZ-lpotnHFxu_V6R7R3viDUcyJ9onqNcMH8c7N1Emnln-ybrZ4J38JdOY.jpg" alt="1">
+        <img class="smallimg" src="My_arts_midjorney/Daniil198300_AI_Fallen_Angel_neon_future_5c0cf6c2-9df8-4628-9b89-af9d4a3b3a1b.png" alt="2">
+        <img class="smallimg" src="My_arts_midjorney/Daniil198300_AI_lord_of_hell_neon_dark_theme_936cb05d-f939-4f2b-b092-d34c23b5ec17.png" alt="3">
+        <img class="smallimg" src="My_arts_midjorney/Daniil198300_AI_woman_4b15b2b7-f4d0-4b23-802c-470a89cc8ae5.png" alt="4">
+        <img class="smallimg" src="My_arts_midjorney/Daniil198300_AI_woman_neon_Hell_424df50e-d2dd-4890-a2b3-5e7ea519e5cb.png" alt="5">
+        <img class="smallimg" src="My_arts_midjorney/Daniil198300_cyberpunk_futuristic_neon_holographic_cyborg_tech__61df0752-bded-4c17-ad95-bf665f1ed29a.png" alt="6">
+        <br>
+        <img class="smallimg" src="My_arts_midjorney/Daniil198300_cyberpunk_futuristic_neon_holographic_cyborg_tech__dc1b2463-eb3c-47df-a0a9-255b18d4e6b7.png" alt="7">
+        <img class="smallimg" src="My_arts_midjorney/FenrirAwait_Angelcore_Spiritcore_Sparklecore_woman_79556c51-07e2-4aec-aaa9-e8294f678eed.png" alt="8">
+        <img class="smallimg" src="My_arts_midjorney/FenrirAwait_Bloomcore_Selkiecore_Sparklecore_woman_83c54e5a-c194-4b6a-a30b-979da943ab3a.png" alt="9">
+        <img class="smallimg" src="My_arts_midjorney/FenrirAwait_Dullcore_Neonpunk_Glowwave_Sparklecore_woman_eab67771-190a-455a-86ff-1d78751e8817.png" alt="10">
+        <img class="smallimg" src="My_arts_midjorney/FenrirAwait_Dullcore_Neonpunk_Glowwave_Sparklecore_woman_f3018fdd-702a-4dd6-825a-7dffa059965c.png" alt="11">
+        <img class="smallimg" src="My_arts_midjorney/FenrirAwait_Glowwave_Neonpunk_Stellar_AI_woman_20d2cb0b-a739-4218-9882-b5350aa36df8.png" alt="12">
+        <br>
+        <img class="smallimg" src="My_arts_midjorney/FenrirAwait_Glowwave_Neonpunk_Stellar_AI_woman_ca187a3b-beec-4edb-aca9-d3a30bfdbec8.png" alt="13">
+        <img class="smallimg" src="My_arts_midjorney/FenrirAwait_Glowwave_Neonpunk_Stellar_AI_woman_eed5af61-bdbb-4c5f-901b-20af4b5fd186.png" alt="14">
+        <img class="smallimg" src="My_arts_midjorney/FenrirAwait_Neonpunk_Smilecore_woman_b9ca0c8f-bc06-4e38-a178-489e794b5843.png" alt="15">
+        <img class="smallimg" src="My_arts_midjorney/FenrirAwait_Lightning_Fairycore_Futuristic_woman_2e17a627-1097-451e-b5ab-cc5f9544617d.png" alt="16">
+        <img class="smallimg" src="My_arts_midjorney/FenrirAwait_Retro_Pastelpunk_Smilecore_woman_ad132c12-ff9f-4a73-8c99-b72225860fa1.png" alt="17">
+        <img class="smallimg" src="My_arts_midjorney/FenrirAwait_Tenwave_woman_neon_future_Labcore_Sanriocore_0dcd9302-41b6-46af-96d3-55f5b2055b07.png" alt="18">
+    </p>
+    <hr>
+
+    <h2 class="header" style="color: midnightblue; font-size: 50px;">StableDiffusion</h2>
+
+    <ul style="font-size: 40px; color: aqua;">
+        <li>
+            <p><a href="https://stablediffusionweb.com/"><b><i>StableDiffusion official website</i></b></a></p>
+        </li>
+    </ul>
+
+    <p class="readme" style="font-size: 30px;">
+        <span class="bigletter">S</span>
+        table Diffusion is a latent text-to-image diffusion model capable of generating photo-realistic 
+        <br>
+        images given any text input, cultivates autonomous freedom to produce incredible imagery, empowers 
+        <br>
+        billions of people to create stunning art within seconds.
+        <br>
+        The program from the Stability AI group went public in August 2022. The neural network can qualitatively 
+        <br>
+        generate images based on a text query, finish sketches and alter reference images in its own way. 
+        <br>
+        All this is free, and the open source code allows you to install Stable Diffusion on your computer and 
+        <br>
+        use your own computing power.
+        <br>
+        <br>
+        There is also a downside to this: not all devices fit the system requirements, and programming skills 
+        <br>
+        are needed to use the full version of Stable Diffusion. But enthusiasts have already developed websites,
+        <br> 
+        applications, bots and programs based on the network. We figured out what is interesting about Stable Diffusion 
+        <br>
+        and how to try a neural network, even if you don't know how to program.
+    </p>
+
+    <p class="readme" style="font-size: 30px;">
+        <span class="bigletter">H</span>
+        ow to install StableDiffusion:
+    </p>
+
+    <ul class="readme" style="font-size: 30px; color: rgb(155, 5, 5);">
+        <li>In order for the program to work, you will need a Windows or Linux computer with a video card 
+            <br>
+            with a memory capacity of 4 or 8 GB. These are the minimum requirements — the more powerful 
+            <br>
+            the resources, the faster the images will be generated. If you have a Mac OS, you will need a 
+            <br>
+            system version no older than 12.3, and the device must have an M1 or M2 processor.</li>
+        <li>A full version of Stable Diffusion requires programming skills. But there are already neural
+            <br> 
+            network-based services: they are much easier to learn, but also not as powerful.</li>
+        <li>You need to follow this link and follow the instructions step by step <p><a href="https://github.com/EmpireMediaScience/A1111-Web-UI-Installer"><b><i>A1111 WebUI Easy Installer and Launcher</i></b></a></p></li>
+    </ul>
+
+    <p class="readme" style="font-size: 30px;">
+        <span class="bigletter">G</span>
+        uides how to use:
+        <a href="https://dtf.ru/howto/1345343-kak-polzovatsya-neyrosetyu-stable-diffusion">Guide</a>, 
+        <a href="https://rentry.org/sdhypertextbook">Manual</a>
+    </p>
+
+    <h1 class="header" style="padding-inline-start:250px; color: red; font-size: 100px;">WARNING</h1>
+    <h1 class="header" style="padding-inline-start:285px;">ONLY 18+, NFSW content</h1>
+
+    <p class="readme" style="font-size: 30px;">
+        <span class="bigletter">S</span>
+        table Diffusion allows you to create content that cannot be created using other neural networks, 
+        <br>
+        using a huge number of user libraries. Unlike Midjourney, you can generate NSFW content in it in 
+        <br>
+        the form you want.
+    </p>
+
+    <p class="readme" style="font-size: 30px;">
+        <span class="bigletter">M</span>
+        y results of using the service:
+        <br>
+        <br>
+        <img src="My_arts_stablediffusion/00105-2153633391-398f4aa680-400x712.png" alt="1" width="253">
+        <img src="My_arts_stablediffusion/00107-2490996446-398f4aa680-400x712.png" alt="2" width="253">
+        <img class="smallimg" src="My_arts_stablediffusion/15985-540268464-extremely_high_quality_RAW_photograph_high_angle_shot_eye_focus_masterpiece_1.1_best_quality_1.1_anatomically_co.png" alt="3">
+        <img class="smallimg" src="My_arts_stablediffusion/00116.png" alt="4">
+        <img src="My_arts_stablediffusion/001551.png" alt="5" width="337">
+        <img src="My_arts_stablediffusion/02224-3906656253-highest_quality_concept_art_4k_colourful_high_sharpness_full_body_front_shot_1.3_smiling_perfect_young_girl_with_l.png" alt="6" width="346">
+        <br>
+        <img class="smallimg" src="My_arts_stablediffusion/001.png" alt="7">
+        <img class="smallimg" src="My_arts_stablediffusion/002.png" alt="8">
+        <img class="smallimg" src="My_arts_stablediffusion/003.png" alt="9">
+        <img class="smallimg" src="My_arts_stablediffusion/004.png" alt="10">
+        <img class="smallimg" src="My_arts_stablediffusion/005.png" alt="11">
+        <img class="smallimg" src="My_arts_stablediffusion/006.png" alt="12">
+        <br>
+        <img src="My_arts_stablediffusion/00014-2309292340-Ahegao_tongue_droolmasterpiecesolo_focus1girlintricate_detail_highres_realism_skin_pores_detailed_face.png" alt="13" width="610">
+        <img src="My_arts_stablediffusion/00739-1028029375-masterpiece20best20quality20ultra-detailed20extremely20detailed20CG20unity208k20wallpaper20best20illustration20best20shadow.png" alt="14" width="507">
+        <img src="My_arts_stablediffusion/00149-3286992958-full_body_golden_horns_dragon_muscular_scaly_skin_scales_tail_monster_girl_detailed_face_detailed.png" alt="15" width="705">
+    </p>
+</body>
+</html>
